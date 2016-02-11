@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>加速度</title>
+    <script type="text/javascript">
+    function state(){
+      var alpha;
+      var beta;
+      var gamma;
+      var buffer = 1;
+
+      this.update_state = function(a,b,g){
+        alpha = a;
+        beta  = b;
+        gamma = g;
+      };
+
+      this.is_change = function(a,b,g){
+        if ( Math.abs( alpha - a ) > buffer ) {
+          this.update_state(a,b,g);
+          return "水平に回転";
+        }
+        else if ( Math.abs( beta - b ) > buffer ) {
+          this.update_state(a,b,g);
+          return "縦に回転";
+        }
+        else if ( Math.abs( gamma - g ) > buffer ) {
+          this.update_state(a,b,g);
+          return "横に回転";
+        }
+        else {
+          this.update_state(a,b,g);
+          return "静止";
+        }
+      };
+    };
+    state = new state();
+
+    function init(){
+      window.addEventListener("deviceorientation", deviceMotion);
+    };
+    function deviceMotion(e) {
+      var alpha = e.alpha;
+      var beta  = e.beta;
+      var gamma = e.gamma;
+
+      document.getElementById("a").innerHTML = "alpha: " + alpha;
+      document.getElementById("b").innerHTML = "beta: " + beta;
+      document.getElementById("g").innerHTML = "gamma: " + gamma;
+      document.getElementById("gyro").innerHTML = "この端末は現在" + state.is_change(Math.floor(alpha),Math.floor(beta),Math.floor(gamma)) + "しています";
+
+    };
+    </script>
+  </head>
+  <body onload="init();">
+    <div>
+      <h1>回転,傾き</h1>
+        <p id="a">alpha:</p>
+        <p id="b">beta:</p>
+        <p id="g">gamma:</p>
+
+        <p id="gyro"></p>
+    </div>
+  </body>
+</html>
