@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>コンパス</title>
+    <script type="text/javascript">
+    function getDirection(h){
+      // 0:北 90:東 180:南 270:西
+      var direction = "error";
+      if ( h < 46 || h > 315 ) {
+        direction="北";
+      }
+      else if ( 45 < h && h < 136 ) {
+        direction="東";
+      }
+      else if ( 135 < h && h < 226 ) {
+        direction="南";
+      }
+      else if ( 225 < h && h < 316 ) {
+        direction="西";
+      }
+      return direction;
+    };
+    function init(){
+      window.addEventListener("deviceorientation", deviceMotion);
+    };
+    function deviceMotion(e) {
+      var heading = e.webkitCompassHeading;
+      var accuracy = e.webkitCompassAccuracy;
+
+      document.getElementById("compass").innerHTML = "このデバイスは" + getDirection(heading) + "を向いています" ;
+
+      document.getElementById("accuracy").innerHTML = "誤差:" + accuracy + "度";
+    };
+    </script>
+  </head>
+  <body onload="init();">
+    <div>
+      <h1>コンパス</h1>
+        <p id="compass">方角:</p>
+        <p id="accuracy">誤差:</p>
+    </div>
+  </body>
+</html>
