@@ -7,7 +7,7 @@
     function getDirection(h){
       // 0:北 90:東 180:南 270:西
       var direction = "error";
-      if ( h < 46 || h > 315 ) {
+      if ( h < 46 && h > 315 ) {
         direction="北";
       }
       else if ( 45 < h && h < 136 ) {
