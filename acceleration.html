@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>加速度</title>
+    <script type="text/javascript">
+    function init(){
+      window.addEventListener("devicemotion", deviceMotion);
+    };
+    function deviceMotion(e) {
+      var ac  = e.acceleration;
+      var acg = e.accelerationIncludingGravity;
+      document.getElementById("ac_x").innerHTML = "X: " + ac.x;
+      document.getElementById("ac_y").innerHTML = "Y: " + ac.y;
+      document.getElementById("ac_z").innerHTML = "Z: " + ac.z;
+      document.getElementById("acg_x").innerHTML = "X: " + acg.x;
+      document.getElementById("acg_y").innerHTML = "Y: " + acg.y;
+      document.getElementById("acg_z").innerHTML = "Z: " + acg.z;
+    };
+    </script>
+  </head>
+  <body onload="init();">
+    <div>
+      <h1>加速度</h1>
+      <h2>acceleration</h2>
+        <p id="ac_x">X:</p>
+        <p id="ac_y">Y:</p>
+        <p id="ac_z">Z:</p>
+      <h2>accelerationIncludingGravity</h2>
+        <p id="acg_x">X:</p>
+        <p id="acg_y">Y:</p>
+        <p id="acg_z">Z:</p>
+    </div>
+  </body>
+</html>
