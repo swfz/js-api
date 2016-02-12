@@ -1,0 +1,557 @@
+<html>
+<head>
+<meta charset="utf-8">
+<!--http://p.tl/qTGr-->
+<script type = "text/javascript">
+var num   = [20,5,12,9,14,11,8,16,7,19,3,17,2,15,10,6,13,4,18,1];
+var ctx2 = new Array(400);
+var px,py;//ポイント
+var total_point=0;//合計点
+var point = 0;//得点
+var r_point = 0;//１ラウンドの得点
+var rd = 0;//ラウンド
+var th = 0;//投数
+var d_or_t;//ダブル、トリプル、ブルの判定
+var db = window.openDatabase("notes","","notes app", 1048576);
+var cW = 400;
+var cH = 400;
+var mouseX = 0;
+var mouseY = 0;
+var color = [
+   ['#000000','#999999'],
+   ['#ff0000','#0000ff']
+];
+var line_color = '#ffffff';
+var frame_color = '#000000';
+
+function init(){
+    update();
+    draw(color,line_color,frame_color);
+    aims();
+    shake();
+}
+
+//初期化----------------------------------------------------------
+function draw(color,line_color,frame_color){
+    var canvas = document.getElementById('graph');
+    if (canvas.getContext) {
+        var ctx = canvas.getContext('2d');
+        var start = 0 , end = 0;
+        var x = 0 , y = 0;
+        var rad   = [110,90,85,60,55,10,4];
+        ctx.beginPath();
+        ctx.lineWidth = 1.5;
+        ctx.clearRect(0,0,400,400);
+        ctx.translate(200,200);
+        ctx.font = "bold 15px";
+        for(i = 0 , len = rad.length; i < len; i++){
+            for(j = 0; j < 20; j++){
+            ctx2[j*10 + i] = canvas.getContext('2d');
+                ctx2[j*10 + i].beginPath();
+    
+                if(i==0 || i==5 || i==6){
+                    ctx2[j*10 + i].fillStyle = i==5 ? color[1][0] : color[0][0];
+                    start = 0;
+                    end   = Math.PI*2;
+                }
+                else{
+                    ctx2[j*10 + i].fillStyle = color[i%2][j%2];
+                    start = -Math.PI * (99 + j*18)/180 ;//8 + j * 18 * Math.PI / 180;
+                    end   = start + (18 * Math.PI / 180);
+                }
+                ctx2[j*10 + i].arc(x,y,rad[i],start,end,false);
+                i==5 ? '' : ctx2[j*10 + i].lineTo(x,y);
+                ctx2[j*10 + i].fill();
+                if(i==0 || i==6){continue;}
+                
+                ctx2[j*10 + i].strokeStyle = line_color;
+                ctx2[j*10 + i].stroke();
+                ctx2[j*10 + i].closePath();
+            }
+        }
+//点数盤表示-----------------------------------------------------------------------
+        for(j = 0,i=0; j < 20; j++){
+            ctx2[j*10 + i] = canvas.getContext('2d');
+            ctx2[j*10 + i].beginPath();
+            ctx2[j*10 + i].fillStyle = "#ffffff";
+            ctx2[j*10 + i].fillText(num[j],-5,-95);
+            ctx2[j*10 + i].rotate(-18 * Math.PI / 180);
+            ctx2[j*10 + i].closePath();
+        }
+        ctx.beginPath();
+        ctx.clearRect(-200,-200,1,1);
+        ctx.translate(-200,-200);
+    }
+}
+function darts(color,line_color,frame_color) {
+    var canvas = document.getElementById('graph');
+    if (canvas.getContext) {
+        var ctx = canvas.getContext('2d');
+        var start = 0 , end = 0;
+        var x = 0 , y = 0;
+        var rad   = [110,90,85,60,55,10,4];
+        ctx.beginPath();
+        ctx.lineWidth = 1.5;
+        ctx.clearRect(0,0,400,400);
+        ctx.translate(200,200);
+        ctx.font = "bold 15px";
+        for(i = 0 , len = rad.length; i < len; i++){
+            for(j = 0; j < 20; j++){
+            ctx2[j*10 + i] = canvas.getContext('2d');
+                ctx2[j*10 + i].beginPath();
+                if(i==0 || i==5 || i==6){
+                    ctx2[j*10 + i].fillStyle = i==5 ? color[1][0] : color[0][0];
+                    start = 0;
+                    end   = Math.PI*2;
+                }
+                else{
+                    ctx2[j*10 + i].fillStyle = color[i%2][j%2];
+                    start = -Math.PI * (99 + j*18)/180 ;//8 + j * 18 * Math.PI / 180;
+                    end   = start + (18 * Math.PI / 180);
+                }
+                ctx2[j*10 + i].arc(x,y,rad[i],start,end,false);
+                i==5 ? '' : ctx2[j*10 + i].lineTo(x,y);
+                ctx2[j*10 + i].fill();
+//的に入っているかの判定-----------------------------------------------
+                if(ctx2[j*10 + i].isPointInPath(px+200,py+200)){
+                    point = point_calc(i,j);
+                    d_or_t = multi_calc(i);
+                }
+                if(i==0 || i==6){continue;}
+                ctx2[j*10 + i].strokeStyle = line_color;
+                ctx2[j*10 + i].stroke();
+                ctx2[j*10 + i].fillStyle = "#ffffff";
+                ctx2[j*10 + i].closePath();
+            }
+        }
+//点数盤表示-----------------------------------------------------------------------
+        for(j = 0,i=0; j < 20; j++){
+            ctx2[j*10 + i] = canvas.getContext('2d');
+            ctx2[j*10 + i].beginPath();
+            ctx2[j*10 + i].fillStyle = "#ffffff";
+            ctx2[j*10 + i].fillText(num[j],-5,-95);
+            ctx2[j*10 + i].rotate(-18 * Math.PI / 180);
+            ctx2[j*10 + i].closePath();
+        }
+//黄色のポインタ-------------------------------------------
+//    tracks();
+        ctx.beginPath();
+        ctx.fillStyle = "#00ff00";
+        ctx.arc(px,py,4,0,2 * Math.PI ,true);
+        ctx.fill();
+//--------------------------------------------------
+        ctx.beginPath();
+        ctx.clearRect(-200,-200,1,1);
+        ctx.translate(-200,-200);
+//総合得点表示-----------------------------------------------------------------------
+        if(th == 0){
+            r_point = 0;
+        }
+        r_point+=point;
+        display(point,r_point,th,rd,d_or_t);
+        total_point+=point;
+        document.getElementById('total').innerHTML = total_point;
+    }
+}
+function display(point,r_point,th,rd,d_or_t){
+var th_text = '<font color="';
+    switch(d_or_t){
+        case 1:th_text += '#ffffff">S:' + point;break;
+        case 2:th_text += '#ff0000">D:' + point/2;break;
+        case 3:th_text += '#00ffff">T:' + point/3 ;break;
+        case 4:th_text += '#ffff00">S:BULL';break;
+        case 5:th_text += '#ffff00">D:BULL';break;
+        default:th_text += '#ffffff">-';
+    }
+    if(th == 0){
+        document.getElementById('1th').innerHTML = th_text;
+        document.getElementById('2th').innerHTML = "2nd:";
+        document.getElementById('3th').innerHTML = "3rd:";
+    }
+    if(th == 1){ document.getElementById('2th').innerHTML = th_text; }
+    if(th == 2){ document.getElementById('3th').innerHTML = th_text; }
+    if(rd == 0){ document.getElementById('1r').innerHTML = "1R:" + r_point; }
+    if(rd == 1){ document.getElementById('2r').innerHTML = "2R:" + r_point; }
+    if(rd == 2){ document.getElementById('3r').innerHTML = "3R:" + r_point; }
+    if(rd == 3){ document.getElementById('4r').innerHTML = "4R:" + r_point; }
+    if(rd == 4){ document.getElementById('5r').innerHTML = "5R:" + r_point; }
+    if(rd == 5){ document.getElementById('6r').innerHTML = "6R:" + r_point; }
+    if(rd == 6){ document.getElementById('7r').innerHTML = "7R:" + r_point; }
+    if(rd == 7){ document.getElementById('8r').innerHTML = "8R:" + r_point; }
+}
+//点数算出--------------------------------------------------
+function point_calc(i,j){
+    var multi = 1;
+    var point2;
+    switch(i){
+        case 0:multi = 0;break;
+        case 1:multi = 2;break;
+        case 2:multi = 1;break;
+        case 3:multi = 3;break;
+        case 4:multi = 1;break;
+        case 5:multi = 50;break;
+        case 6:multi = 50;break;
+        default:multi = 0;
+    }
+    point2 = num[j]*multi;
+    if(multi == 50){
+        point2 = 50;
+    }
+    return point2;
+}
+//ダブル、トリプル判定
+function multi_calc(i){
+    switch(i){
+    case 0:multi = 0;break;
+    case 1:multi = 2;break;
+    case 2:multi = 1;break;
+    case 3:multi = 3;break;
+    case 4:multi = 1;break;
+    case 5:multi = 4;break;
+    case 6:multi = 5;break;
+    default:multi = 0;
+    }
+    return multi;
+}
+function aims(){
+    //ターゲットクリック
+    var canvas = document.getElementById('graph');
+    var ctx3 = canvas.getContext('2d');
+	canvas.onmousedown = mouseDownListner;
+	function mouseDownListner(e) {
+		//表示クリア
+        draw(color,line_color,frame_color);
+		adjustXY(e);
+		ctx3.beginPath();
+		ctx3.strokeStyle = "#00FFFF";
+		ctx3.arc(mouseX, mouseY, 10, 0, Math.PI * 2, false);
+        ctx3.moveTo(mouseX-12, mouseY);
+        ctx3.lineTo(mouseX+12, mouseY);
+        ctx3.moveTo(mouseX, mouseY-12);
+        ctx3.lineTo(mouseX, mouseY+12);
+		ctx3.stroke();
+	}
+	function adjustXY(e) {
+		var rect = e.target.getBoundingClientRect();
+		mouseX = e.clientX - rect.left;
+		mouseY = e.clientY - rect.top;
+	}
+}
+
+function shake(){
+    var curX = 0;
+    var moved = '';
+    var running = false;
+    var READY = 6;
+    var EXEC = 8;
+    var TIMEOUT = 500;
+    var time = 0;
+    var CNT = 50;
+
+    setInterval( function() {
+        if( !moved ) {
+            if( curX > READY ) {
+                //move to left
+                moved = 'left';
+            } else if( curX < -READY ) {
+            //move to right
+            moved = 'right';
+        }
+    }
+
+    if( moved == 'left' && curX > EXEC && !running ) {
+        running = true;
+        //前方向
+        throw_darts();
+    } else if( moved == 'right' && curX < -EXEC && !running ) {
+        running = true;
+    }
+    time += CNT;
+    if( time > TIMEOUT ) {
+        time = 0;
+        moved = '';
+        running = false;
+    }
+}, CNT);
+    window.addEventListener('devicemotion', function(e) {
+        var acc = e.accelerationIncludingGravity;
+        curX = acc.z;
+    }, false);
+}
+
+function throw_darts(){
+//ランダムでポイント生成--------------------------------------------------
+    var x = Math.floor(Math.random()*200);
+    var y = Math.floor(Math.random()*Math.sqrt((100*100-(x-100)*(x-100))));
+    if(!y){ y = 0;}
+    px = x - 100;
+    py = 2*y -100;
+//ターゲットポイント
+    var aim_x = mouseX-200;
+    var aim_y = mouseY-200;
+
+    if(px != aim_x){
+        px = (px/5) + aim_x;
+    }
+    if(py != aim_y){
+        py = (py/5) + aim_y;
+    }
+//ボードタイプ選択
+    for(var k = 0; k < 4 ; k++){
+        if(document.getElementsByName('darts')[k].checked){
+            var type = document.getElementsByName('darts')[k].value;
+        }
+    }
+//タイプセット、判定、描画へ
+    type_set(type);
+//投数、ラウンド処理-------------------------------------------------------------
+    th++;
+    point = 0;
+    if(th > 2){
+        rd++;
+        th = 0;
+    }
+    add();//ディスプレイ表示
+    if(rd > 7){
+        insertNote(total_point);
+//        is_highest();
+        document.form1.button1.disabled = true;
+        document.form1.button2.disabled = false;
+        alert("得点は" + total_point + "です。");
+    }
+}
+function all_clear(){
+    th          = 0;
+    rd          = 0;
+    point       = 0;
+    total_point = 0;
+    r_point     = 0;
+//    document.getElementById('point').innerHTML = point;
+    document.getElementById('total').innerHTML = total_point;
+    document.getElementById('1th').innerHTML = "1st";
+    document.getElementById('2th').innerHTML = "2nd";
+    document.getElementById('3th').innerHTML = "3rd";
+    document.getElementById('1r').innerHTML = "1R";
+    document.getElementById('2r').innerHTML = "2R";
+    document.getElementById('3r').innerHTML = "3R";
+    document.getElementById('4r').innerHTML = "4R";
+    document.getElementById('5r').innerHTML = "5R";
+    document.getElementById('6r').innerHTML = "6R";
+    document.getElementById('7r').innerHTML = "7R";
+    document.getElementById('8r').innerHTML = "8R";
+    document.form1.button1.disabled = false;
+    document.form1.button2.disabled = true;
+    draw();
+}
+function type_set(t){
+    if(t == 0){
+        color = [
+           ['#000000','#999999'],
+           ['#ff0000','#0000ff']
+        ];
+        line_color = '#ffffff';
+        frame_color = '#000000';
+        darts(color,line_color,frame_color);
+    }
+    if(t == 1){
+        color = [
+           ['#000000','#999933'],
+           ['#cc0000','#009900']
+        ];
+        line_color = '#000000';
+        frame_color = '#000000';
+        darts(color,line_color,frame_color);
+    }
+    if(t == 2){
+        color = [
+           ['#000000','#ffffcc'],
+           ['#cc0000','#009900']
+        ];
+        line_color = '#999999';
+        frame_color = '#000000';
+        darts(color,line_color,frame_color);
+    }
+    if(t == 3){
+        color = [
+           ['#000000','#666666'],
+           ['#cccccc','#333333']
+        ];
+        line_color = '#999999';
+        frame_color = '#000000';
+        darts(color,line_color,frame_color);
+    }
+}
+function clearNotes() {
+    db.transaction(function(tx) {
+        tx.executeSql('DROP TABLE Notes',[],
+        function(tx,res){}, function(tx,error) {
+            reportError('sql',error.message);
+        });
+    });
+    update();
+}
+
+function render(region) {
+    db.transaction(function(tx) {
+        tx.executeSql('CREATE TABLE IF NOT EXISTS Notes(note TEXT)',[]);
+        tx.executeSql('SELECT * FROM Notes', [], function(tx, res) {
+            var str = '<table border="1"><tr><th>得点履歴</th></tr>';
+            var len = res.rows.length;
+            for(var i=0; i<len; i++) {
+                str += '<tr><td>'+res.rows.item(i).note+'</td></tr>';
+            }
+            str += '</table>';
+            renderNotes(str);
+        });
+    });
+}
+
+function renderNotes(str) {
+    document.getElementById('render').innerHTML = str;
+}
+
+function insertNote(text) {
+    db.transaction(function(tx) {
+        tx.executeSql('INSERT INTO Notes VALUES(?)', [text],
+        function(tx, res) {
+            update();
+        },
+        function(tx, error) {
+            reportError('sql', error.message);
+        });
+    });
+}
+function update() {
+    var region = document.getElementById('render');
+    render(region);
+}
+function reportError(source, message) {
+    alert(message);
+}
+
+function add(){
+    document.getElementById('display1').className="vision2";
+    setTimeout(function(){document.getElementById('display1').className="vision";}, 3000);
+}
+
+</script>
+<style TYPE="text/css">
+<!--
+.vision{ 
+display:none;
+}
+@-webkit-keyframes button{
+    0%{
+    background-color:rgba(255,255,255,0);
+    color:rgba(255,255,255,0);
+    border:rgba(255,255,255,0);
+    }
+    40%{
+    background-color:rgba(0,0,0,1);
+    }
+    70%{
+    background-color:rgba(0,0,0,1);
+    }
+    100%{
+    background-color:rgba(255,255,255,0);
+    color:rgba(255,255,255,0);
+    border:rgba(255,255,255,0);
+    }
+}
+.vision2{
+    display:block;
+    background:#000000;
+    color:#ffffff;
+    width:200px;
+    margin-left:100px;
+    position:absolute;
+    top:100px;
+    left:0px;
+    -webkit-animation-name:button;
+    -webkit-animation-duration:3s;
+    -webkit-animation-timing-function:ease-in;
+    -webkit-animation-iteration-count:1;
+}
+#total{
+    color:#fa3;
+    font-weight:bold;
+    font-size:40px;
+    text-shadow: 0 0 1px #fff,
+    0 0 2px #fff,
+    0 0 3px #fff,
+    0 0 4px #fa3,
+    0 0 7px #fa3,
+    0 0 8px #fa3,
+    0 0 10px #fa3,
+    0 0 15px #fa3;
+    -webkit-animation-name:button;
+    -webkit-animation-duration:3s;
+    -webkit-animation-timing-function:ease-in;
+    -webkit-animation-iteration-count:1;
+}
+
+body {
+    background-color:#cccccc;
+    color:#333333;
+}
+-->
+
+</style>
+
+<title>サンプル</title>
+<meta name="viewport" content="width=device-width, initial-scale=0.7, maximum-scale=2">
+</head>
+<body onload="init()">
+<table id="display1" class="vision" border="1">
+    <tr>
+        <td id="1r">1R</td>
+        <td rowspan="3"></td>
+        <td id="total"rowspan="8">**</td>
+    </tr>
+    <tr>
+        <td id="2r">2R</td>
+    </tr>
+    <tr>
+        <td id="3r">3R</td>
+    </tr>
+    <tr>
+        <td id="4r">4R</td>
+        <td  id="1th">一投目</td>
+    </tr>
+    <tr>
+        <td id="5r">5R</td>
+        <td id="2th">二投目</td>
+    </tr>
+    <tr>
+        <td id="6r">6R</td>
+        <td id="3th">三投目</td>
+    </tr>
+    <tr>
+        <td id="7r">7R</td>
+        <td rowspan="2"></td>
+    </tr>
+    <tr>
+        <td id="8r">8R</td>
+    </tr>
+</table>
+
+<canvas id="graph" width="400" height="400"></canvas>
+<form name="form1">
+<input name="button1" type="button" onClick="throw_darts()" value="投げる！！">
+<br />
+<input type="radio" name="darts" value="0" checked="checked">
+dartslive<br />
+<input type="radio" name="darts" value="1">
+phoenix<br />
+<input type="radio" name="darts" value="2">
+soft<br />
+<input type="radio" name="darts" value="3">
+monotone<br />
+<input name="button2" type="button" onClick="all_clear()" value="リスタート">
+</form>
+<input name="button2" type="button" onClick="clearNotes()" value="クリアする">
+-
+<div id="render"></div>
+<div id="debug"></div>
+</body>
+</html>
